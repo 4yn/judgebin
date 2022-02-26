@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+
+if [[ $# -ne 1 ]]; then
+    echo "Judges a problemset"
+    echo "Usage: $0 [FILENAME]"
+    echo "$0, $0.in and $0.ans should exist"
+    exit 1
+fi
+
+PROBLEM=$(basename $1 .cpp)
+
+if ! jcomp $PROBLEM; then
+    exit 1
+fi
+
+if [[ ! -f "$PROBLEM.in" ]]; then
+    echo "Input data $PROBLEM.in does not exist"
+    exit 1
+fi
+
+if [[ ! -f "$PROBLEM.ans" ]]; then
+    echo "Answer data $PROBLEM.ans does not exist"
+    exit 1
+fi
+
+echo "Grading $PROBLEM"
+
+./$PROBLEM < $PROBLEM.in > $PROBLEM.out
+cat $PROBLEM.out | tr "\n" "\0" | sed "s/\x1b\[34m[^\x1b]*\x1b\[0m//g" | tr "\0" "\n" > $PROBLEM.out.strip
+diff -E -Z -b -B --strip-trailing-cr $PROBLEM.ans $PROBLEM.out.strip > $PROBLEM.diff
+
+RED="\e[31m"
+GREEN="\e[32m"
+ENDCOLOR="\e[0m"
+
+if [[ ! -s "$BASENAME.diff" ]]; then
+    echo -e "${GREEN}AC${ENDCOLOR}"
+    rm $PROBLEM.diff
+else
+    echo -e "${RED}WA${ENDCOLOR}"
+fi

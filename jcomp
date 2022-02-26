@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+
+if [[ $# -ne 1 ]]; then
+    echo "Compiles a .cpp file"
+    echo "Usage: $0 [FILENAME].cpp"
+    exit 1
+fi
+
+PROBLEM=$(basename $1 .cpp)
+
+if [[ ! -f "$PROBLEM.cpp" ]]; then
+    echo "File $PROBLEM.cpp does not exist"
+    exit 1
+fi
+
+RUN=0
+
+if [[ ! -f "$PROBLEM" ]]; then
+    echo "Compiling for $PROBLEM"
+    RUN=1
+else
+    SOURCETIME=$(date -r $PROBLEM.cpp "+%s")
+    BINTIME=$(date -r $PROBLEM "+%s")
+
+    if [[ $SOURCETIME -ge $BINTIME ]]; then
+        echo "Binary is stale, recompiling for $PROBLEM"
+        RUN=1
+    fi
+fi
+
+if [[ $RUN -eq 0 ]]; then
+    echo "Not updating $PROBLEM"
+    exit 0
+fi
+
+if ! g++ -O2 -std=c++17 -DCP_LOCAL_DEBUG -o $PROBLEM $PROBLEM.cpp; then
+    exit 1
+fi
+chmod +x $PROBLEM
+
+echo "$PROBLEM.cpp compiled to $PROBLEM"

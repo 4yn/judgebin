@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+
+if [[ $# -ne 1 ]]; then
+    echo "Judges a problemset with multiple testcases"
+    echo "Usage: $0 [FILENAME]"
+    echo "$0, $0.tc/*.in and $0.tc/*.ans should exist"
+    exit 1
+fi
+
+PROBLEM=$(basename $1 .cpp)
+
+if ! jcomp $PROBLEM; then
+    exit 1
+fi
+
+if [[ ! -d "$PROBLEM.tc" ]]; then
+    echo "Testcase folder $PROBLEM.tc/ does not exist"
+    exit 1
+fi
+
+INFILES=$(find "$PROBLEM.tc/" -mindepth 1 -maxdepth 1 -name "*.in" -printf "%f\n")
+
+if [[ -z "$INFILES" ]]; then
+    echo "No .in files found in $PROBLEM.tc/"
+    exit 1
+fi
+
+echo "Grading (multiple) $PROBLEM"
+
+IFS="
+"
+RED="\e[31m"
+GREEN="\e[32m"
+ENDCOLOR="\e[0m"
+
+for INFILE in $INFILES
+do
+    TCBASENAME=$(basename $INFILE .in)
+    TCIN=$PROBLEM.tc/$TCBASENAME.in
+    TCANS=$PROBLEM.tc/$TCBASENAME.ans
+    TCOUT=$PROBLEM.tc/$TCBASENAME.out
+    TCOUTSTRIP=$PROBLEM.tc/$TCBASENAME.out.strip
+    TCDIFF=$PROBLEM.tc/$TCBASENAME.diff
+
+    if [[ ! -f "$PROBLEM" ]]; then
+        echo ".ans file to testcase $PROBLEM.tc/$TCIN does not exist"
+        exit 1
+    fi
+
+    ./$PROBLEM < $TCIN > $TCOUT
+    cat $TCOUT | tr "\n" "\0" | sed "s/\x1b\[34m[^\x1b]*\x1b\[0m//g" | tr "\0" "\n" > $TCOUTSTRIP
+    diff -E -Z -b -B --strip-trailing-cr $TCANS $TCOUTSTRIP > $TCDIFF
+
+    if [[ ! -s "$TCDIFF" ]]; then
+        echo -e "${GREEN}AC${ENDCOLOR} $PROBLEM ${TCBASENAME}"
+        rm $TCDIFF
+    else
+        echo -e "${RED}WA${ENDCOLOR} $PROBLEM ${TCBASENAME}"
+    fi
+done
