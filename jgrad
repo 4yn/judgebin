@@ -33,7 +33,7 @@ RED="\e[31m"
 GREEN="\e[32m"
 ENDCOLOR="\e[0m"
 
-if [[ ! -s "$BASENAME.diff" ]]; then
+if [[ ! -s "$PROBLEM.diff" ]]; then
     echo -e "${GREEN}AC${ENDCOLOR}"
     rm $PROBLEM.diff
 else

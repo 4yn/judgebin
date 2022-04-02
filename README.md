@@ -5,7 +5,7 @@ Bash scripts to help with competitive programming environment.
 ## Install
 
 ```
-sudo cp * /usr/local/bin
+sudo cp j* /usr/local/bin
 ```
 
 ## Usage
